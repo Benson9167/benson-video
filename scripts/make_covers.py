@@ -76,26 +76,26 @@ def build_style_c_html(
 ):
     if layout_kind == "16x9":
         hero_pos = hero_pos_override or "center 16%"
-        bar_h, bar_bottom, skew = "382px", "-28px", "-2.6deg"
+        bar_h, bar_bottom, skew = "436px", "-28px", "-2.6deg"
         spark_fs, spark_pad, spark_top, spark_left = "60px", "10px 38px", "40px", "48px"
         game_fs, game_top, game_right = "34px", "48px", "52px"
-        content_left, content_right, content_bottom, content_align = "66px", "60px", "38px", "flex-start"
+        content_left, content_right, content_bottom, content_align = "66px", "60px", "92px", "flex-start"
         title_fs, stroke_w, pill_fs, sub_fs = "198px", "24px", "54px", "66px"
         row_dir, row_gap, sub_extra = "row", "24px", ""
     elif layout_kind == "4x3":
         hero_pos = hero_pos_override or "center 13%"
-        bar_h, bar_bottom, skew = "370px", "-25px", "-3.2deg"
+        bar_h, bar_bottom, skew = "424px", "-25px", "-3.2deg"
         spark_fs, spark_pad, spark_top, spark_left = "56px", "10px 34px", "38px", "42px"
         game_fs, game_top, game_right = "32px", "48px", "44px"
-        content_left, content_right, content_bottom, content_align = "54px", "44px", "38px", "flex-start"
+        content_left, content_right, content_bottom, content_align = "54px", "44px", "92px", "flex-start"
         title_fs, stroke_w, pill_fs, sub_fs = "174px", "22px", "48px", "58px"
         row_dir, row_gap, sub_extra = "row", "20px", ""
     else:
         hero_pos = hero_pos_override or "74% 12%"
-        bar_h, bar_bottom, skew = "495px", "-34px", "-3.5deg"
+        bar_h, bar_bottom, skew = "546px", "-34px", "-3.5deg"
         spark_fs, spark_pad, spark_top, spark_left = "52px", "10px 30px", "44px", "36px"
         game_fs, game_top, game_right = "30px", "52px", "36px"
-        content_left, content_right, content_bottom, content_align = "40px", "40px", "74px", "center"
+        content_left, content_right, content_bottom, content_align = "40px", "40px", "126px", "center"
         title_fs, stroke_w, pill_fs, sub_fs = "138px", "20px", "48px", "54px"
         row_dir, row_gap, sub_extra = "column", "16px", "text-align: center;"
 
@@ -210,6 +210,23 @@ def build_style_c_html(
 </html>"""
 
 
+def _draw_preview_safe_zones(im, kind, font):
+    rgba = im.convert("RGBA")
+    ov = Image.new("RGBA", rgba.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(ov, "RGBA")
+    w, h = rgba.size
+    zone_h = int(round(h * (126.0 / 1440.0 if kind == "3x4" else 92.0 / 1080.0)))
+    left_w = int(round(w * (0.42 if kind == "3x4" else 0.28)))
+    d.rectangle([0, h - zone_h, left_w, h], fill=(255, 68, 68, 82), outline=(255, 224, 64, 240), width=3)
+    lbl = "♡ 点赞安全避让区" if kind == "3x4" else "♡ 点赞/播放避让区"
+    d.text((10, h - zone_h + 8), lbl, fill=(255, 248, 180, 255), font=font)
+    if kind in ("16x9", "4x3"):
+        right_w = int(round(w * 0.18))
+        d.rectangle([w - right_w, h - zone_h, w, h], fill=(255, 68, 68, 82), outline=(255, 224, 64, 240), width=3)
+        d.text((w - right_w + 10, h - zone_h + 8), "时长避让区", fill=(255, 248, 180, 255), font=font)
+    return Image.alpha_composite(rgba, ov).convert("RGB")
+
+
 def generate_covers(
     out_dir,
     hero_img,
@@ -222,6 +239,7 @@ def generate_covers(
     title_font=None,
     sans_font=None,
     mosaic_boxes=None,
+    draw_safe_guides=False,
 ):
     os.makedirs(out_dir, exist_ok=True)
     src_hero = hero_img
@@ -279,16 +297,19 @@ def generate_covers(
     lbl_fp = find_font(get_cjk_sans_candidates())
     try:
         lbl_font = ImageFont.truetype(lbl_fp, 28) if lbl_fp else ImageFont.load_default()
+        guide_font = ImageFont.truetype(lbl_fp, 18) if lbl_fp else ImageFont.load_default()
     except Exception:
         lbl_font = ImageFont.load_default()
+        guide_font = lbl_font
     x = pad
-    for im, lbl in (
-        (r16, "16:9 B站个人空间 (1920x1080)"),
-        (r43, "4:3 抖音横封 & B站首页 (1440x1080)"),
-        (r34, "3:4 抖音竖封 (1080x1440)"),
+    for kind, im, lbl in (
+        ("16x9", r16, "16:9 B站个人空间 (1920x1080)"),
+        ("4x3", r43, "4:3 抖音横封 & B站首页 (1440x1080)"),
+        ("3x4", r34, "3:4 抖音竖封 (1080x1440)"),
     ):
         draw.text((x + 4, 18), lbl, fill=(14, 52, 118), font=lbl_font)
-        sheet.paste(im, (x, header_h))
+        tile = _draw_preview_safe_zones(im, kind, guide_font) if draw_safe_guides else im
+        sheet.paste(tile, (x, header_h))
         x += im.width + pad
     preview = os.path.join(out_dir, "covers_preview.jpg")
     sheet.save(preview, quality=94)
@@ -314,6 +335,7 @@ if __name__ == "__main__":
     ap.add_argument("--title-font", default=None)
     ap.add_argument("--sans-font", default=None)
     ap.add_argument("--mosaic", action="append", default=[], help="x1,y1,x2,y2 (repeatable 24px pixel mosaic)")
+    ap.add_argument("--safe-zone-guide", action="store_true", help="Overlay bottom-left like/play & duration safe zones on covers_preview.jpg")
     args = ap.parse_args()
     mboxes = [[int(float(v)) for v in m.split(",")] for m in args.mosaic]
     generate_covers(
@@ -328,4 +350,5 @@ if __name__ == "__main__":
         title_font=args.title_font,
         sans_font=args.sans_font,
         mosaic_boxes=mboxes,
+        draw_safe_guides=args.safe_zone_guide,
     )

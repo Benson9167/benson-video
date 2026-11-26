@@ -30,4 +30,4 @@
 - [ ] 12 帧 `inspection_sheet.jpg` 已用 `read_file` 肉眼逐格核查，无黑帧、无过渡糊帧、静态图缩放无 1px 抖动。
 - [ ] **无第三方水印/原硬字幕残留**，所有敏感打码区 100% 覆盖无漏边。
 - [ ] 左上 HUD、正中 `callouts`、底部字幕与进度条互不打架；若叠加进度条压到游戏关键 UI，已主动提示切换 `separate_bottom` / `separate_top`。
-- [ ] 三比例封面（`cover_16x9.jpg`、`cover_4x3.jpg`、`cover_3x4.jpg`）经 `covers_preview.jpg` 复检：3:4 竖封未切眼/切脸、文字无溢出或遮挡关键构图。
+- [ ] 三比例封面（`cover_16x9.jpg`、`cover_4x3.jpg`、`cover_3x4.jpg`）经 `covers_preview.jpg` 复检：3:4 竖封未切眼/切脸、文字无溢出或遮挡关键构图；**底部留白充足（3:4 ≥ 120px、16:9/4:3 ≥ 90px），左下角 `♡ 点赞数 / ▶ 播放` 与右下角 `时长` 避让区无任何文字或胶囊压字**（可用 `--safe-zone-guide` 辅助核验）。
