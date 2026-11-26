@@ -1,0 +1,26 @@
+[
+  {
+    "id": "c01_clean_blur",
+    "src": "media/raw_clip_01.mp4",
+    "out": "work/ep_demo/clips/c01_clean_blur.mp4",
+    "ss": 12.5,
+    "dur": 3.4,
+    "crop_vf": "crop=iw*0.87:ih*0.87:0:ih*0.13",
+    "blur_rects": [
+      [180, 910, 1560, 120, 18]
+    ],
+    "test_badge": false
+  },
+  {
+    "id": "c02_mosaic_guard",
+    "src": "media/raw_clip_02.mkv",
+    "out": "work/ep_demo/clips/c02_mosaic_guard.mp4",
+    "ss": 6.0,
+    "dur": 2.8,
+    "mosaic_boxes": [
+      [500, 470, 675, 625]
+    ],
+    "mosaic_block": 24,
+    "test_badge": true
+  }
+]

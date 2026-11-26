@@ -1,0 +1,9 @@
+playwright>=1.45.0
+Pillow>=10.0.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+
+# Optional components (install on demand):
+# yt-dlp>=2024.10.0        # Bilibili media download (fetch_bili_media.py)
+# faster-whisper>=1.0.0     # Word-level ASR alignment (voice_pipeline.py)
+# edge-tts>=6.1.0           # Zero-VRAM fallback narration (voice_pipeline.py)

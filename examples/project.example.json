@@ -1,0 +1,74 @@
+{
+  "layout": "16x9_full",
+  "fps": 30,
+  "total_duration": 10.0,
+  "work_dir": "work/ep_demo",
+  "out_dir": "outputs/ep_demo",
+  "output_name": "demo_fastcut_16x9.mp4",
+  "srt_name": "demo_fastcut.srt",
+  "deliver_to_videos": false,
+  "use_bottom_scrim": false,
+  "use_hud_scrim": false,
+  "subtitle_font_size": 78,
+  "voice_wav": "work/ep_demo/voice/voice_clean.wav",
+  "bgm_path": "assets/bgm_upbeat_48k.wav",
+  "bgm_volume": 0.24,
+  "chapter_bar": {
+    "enabled": true,
+    "placement": "separate_bottom",
+    "height": 52,
+    "accent": [90, 185, 255],
+    "chapters": [
+      { "label": "开场结论", "start": 0.0, "end": 4.0 },
+      { "label": "福利重点", "start": 4.0, "end": 10.0 }
+    ]
+  },
+  "huds": {
+    "open": {
+      "pill": "版本前瞻",
+      "title": "新版本省流速览",
+      "sub": "1分钟看完核心改动",
+      "accent": [24, 136, 232]
+    },
+    "welfare": {
+      "pill": "01 · 福利汇总",
+      "title": "登录即领奖励",
+      "sub": "核心资源分配建议",
+      "accent": [228, 102, 36]
+    }
+  },
+  "callouts": [
+    {
+      "start": 4.2,
+      "end": 6.8,
+      "text": "累计可领 120 抽",
+      "pos": "center_1",
+      "fs": 104,
+      "color": "gold",
+      "anim": "stamp"
+    }
+  ],
+  "shots": [
+    {
+      "id": "01_open_clip",
+      "start": 0.0,
+      "end": 4.0,
+      "kind": "vid",
+      "src": "work/ep_demo/clips/clip01.mp4",
+      "ss": 0.0,
+      "hud": "open"
+    },
+    {
+      "id": "02_poster",
+      "start": 4.0,
+      "end": 10.0,
+      "kind": "img",
+      "src": "work/ep_demo/media/poster01.jpg",
+      "hud": "welfare"
+    }
+  ],
+  "cues": [
+    { "start": 0.08, "text": "新版本核心改动一分钟带你看完" },
+    { "start": 4.10, "text": "开局登录即可直接领满核心福利" }
+  ]
+}
