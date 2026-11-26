@@ -28,9 +28,10 @@ description: >-
    python -X utf8 scripts/fetch_bili_media.py --work-dir <work_dir> --bvids "BV1xxx,alias=BV1yyy" --download
    ```
 3. 用 `read_file` 检视 `sheets/videos_sheet.jpg`，记下与口播精准对位的画面时间戳（讲谁切谁，禁止拿无关画面凑数）。
+4. **宁缺毋滥 · 主动提醒补录**：若核心镜头缺失高清对口实机、掉帧严重或带抹不净的中心大水印，严禁凑数硬上，主动列出 3–8 秒具体画面补录清单请用户补录。标准工程目录与可选开源扩展工具地图见 [references/tool-ecosystem.md](./references/tool-ecosystem.md)。
 
 ### Step 2 · 口播稿与纯净素文案
-1. 默认控时 **45–65 秒**（约 220–360 字），短句口语化，开头 3 秒直给钩子与结论。
+1. 参照 [references/script-templates-and-hooks.md](./references/script-templates-and-hooks.md) 的 **5 大爆款文案骨架与陈述式标题规范**，默认控时 **45–65 秒**（约 220–360 字），短句口语化，开头 3 秒直给钩子与结论。
 2. 同步保存一份 **纯净素文案**（`voice_script_plain.txt`）：按标点断行（顿号不断行），去掉所有标题/注释/括号，方便随时真人照念或局部补录。
 
 ### Step 3 · 配音生成 / 真人精修 + 必做亲耳听检 + 【4选1返修闸门】
@@ -55,12 +56,12 @@ description: >-
 - 面对平台低俗/敏感部位风控画面，统一使用 `--mosaic x1,y1,x2,y2`（24px 圆角羽化像素马赛克），并通过 `--qa-sheet` 生成拼图逐格肉眼核验不露边、不遮脸。
 
 ### Step 5 · 双版式组装渲染 + 30fps 连续进度条 + 抖音响度母带
-详规见 [references/layout-and-visuals.md](./references/layout-and-visuals.md)，工具见 [scripts/render_video.py](./scripts/render_video.py)：
+详规见 [references/layout-and-visuals.md](./references/layout-and-visuals.md) 与 [references/editing-and-motion-recipes.md](./references/editing-and-motion-recipes.md)，工具见 [scripts/render_video.py](./scripts/render_video.py)：
 1. **制作前交互确认（若用户未指定）**：
    - 询问是否开启 **30fps 连续推进章节进度条**，以及放置模式：`separate_bottom`（画面外独立 `52px` 底条，**零遮挡游戏 UI 与字幕，默认推荐**）、`separate_top`、`overlay_bottom`、`overlay_top`；
    - **改版先出效果图红线**：若需调整 HUD、字幕或模板结构，必须先出 2–3 张单帧效果图供用户拍板再全片渲染。
 2. **抖音小屏优先默认值**：
-   - 主画幅 `16x9_full`（原画全屏，默认 `use_bottom_scrim: false`、`use_hud_scrim: false`、左上极简裸字 HUD、底部 **`78px`** 单行粗描边字幕、正中 `96–116px` 核心数据 `callouts`）；纯文字公告切 `4x3_card`（`72px` 字幕）；
+   - 主画幅 `16x9_full`（原画全屏，默认 `use_bottom_scrim: false`、`use_hud_scrim: false`、左上极简裸字 HUD、底部 **`78px`** 单行粗描边字幕、正中 `96–116px` 核心数据 `callouts`）；纯文字公告切 `4x3_card`（`72px` 字幕，可用 [scripts/make_card_overlays.py](./scripts/make_card_overlays.py) + [examples/project_4x3_card.example.json](./examples/project_4x3_card.example.json) 生成三模块省流卡片）；
    - 静态图强制走 OpenCV 亚像素浮点 `warpAffine` 微推（禁用 FFmpeg `zoompan`）；
    - 混音自动做人声高通压缩 + BGM 人声凹槽 EQ 与侧链闪避 + 2-pass `loudnorm` + 192kHz 过采样限幅至 **`-11.5 ~ -12.0 LUFS` / `-1.0 dBTP`**。
 3. **执行渲染（支持先 `--dry-run`）**：
@@ -68,14 +69,15 @@ description: >-
    python -X utf8 scripts/render_video.py --config path/to/project.json --dry-run
    python -X utf8 scripts/render_video.py --config path/to/project.json
    ```
+   若后续**仅需换 BGM 或微调配乐音量**，直接用 [scripts/swap_audio.py](./scripts/swap_audio.py) 走 `-c:v copy` **5 秒无损直封**（零重编码画面）。
 4. **视觉 QA（必做）**：用 `read_file` 打开自动生成的 `inspection_sheet.jpg` 逐格核验无错字、无重叠、无残余水印/硬字幕。
 
-### Step 6 · Style-C 三比例封面生成与核验
-使用 [scripts/make_covers.py](./scripts/make_covers.py) 一次性无裁切输出三比例封面（支持 `--mosaic` 对原图敏感区预打码）并生成 `covers_preview.jpg`：
+### Step 6 · Style-C 多比例封面生成与核验
+使用 [scripts/make_covers.py](./scripts/make_covers.py) 一次性无裁切输出三比例封面（支持 `--mosaic` 对原图敏感区预打码，以及 `--include-9x16` 可选输出 9:16 竖屏满屏封面）并生成 `covers_preview.jpg`：
 ```powershell
-python -X utf8 scripts/make_covers.py --out-dir <out_dir>/covers --hero <hero.jpg> --spark "1分钟省流" --game-tag "作品名称" --title "核心大标题" --pill "高亮亮点" --sub "副标题补充说明"
+python -X utf8 scripts/make_covers.py --out-dir <out_dir>/covers --hero <hero.jpg> --spark "1分钟省流" --game-tag "作品名称" --title "核心大标题" --pill "高亮亮点" --sub "副标题补充说明" --safe-zone-guide
 ```
-输出：`cover_16x9.jpg`（B 站个人空间）、`cover_4x3.jpg`（抖音横封 + B 站首页推荐）、`cover_3x4.jpg`（抖音竖封），并用 `read_file` 核验 `covers_preview.jpg`。
+输出：`cover_16x9.jpg`（B 站个人空间）、`cover_4x3.jpg`（抖音横封 + B 站首页推荐）、`cover_3x4.jpg`（抖音竖封，加 `--include-9x16` 另出 `cover_9x16.jpg`），并用 `read_file` 核验 `covers_preview.jpg`。
 
 ### Step 7 · 多账号隔离上传与随机间隔错峰发布
 详情分别见 [references/multi-account-isolation.md](./references/multi-account-isolation.md)、[references/douyin-game-handle-and-tags.md](./references/douyin-game-handle-and-tags.md)、[references/dual-ratio-cover-upload.md](./references/dual-ratio-cover-upload.md)：

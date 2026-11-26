@@ -1,0 +1,67 @@
+{
+  "layout": "4x3_card",
+  "fps": 30,
+  "total_duration": 18.0,
+  "work_dir": "work/ep01",
+  "out_dir": "outputs/ep01",
+  "output_name": "ep01_4x3_cards.mp4",
+  "srt_name": "ep01_4x3.srt",
+  "subtitle_font_size": 72,
+  "use_bottom_scrim": false,
+  "use_hud_scrim": false,
+  "voice_wav": "work/ep01/voice/voice_clean.wav",
+  "bgm_path": "assets/bgm_upbeat.wav",
+  "bgm_volume": 0.25,
+  "chapter_bar": {
+    "enabled": true,
+    "placement": "separate_bottom",
+    "height": 52,
+    "accent": [72, 168, 255],
+    "chapters": [
+      {"start": 0.0, "end": 4.0, "label": "开场结论"},
+      {"start": 4.0, "end": 10.0, "label": "核心优化"},
+      {"start": 10.0, "end": 14.5, "label": "实操避坑"},
+      {"start": 14.5, "end": 18.0, "label": "总结收藏"}
+    ]
+  },
+  "shots": [
+    {
+      "id": "S1_opening",
+      "src": "work/ep01/cards/S1_opening.png",
+      "start": 0.0,
+      "end": 4.0,
+      "zoom": 1.03
+    },
+    {
+      "id": "S2_card_core",
+      "src": "work/ep01/clips/bg_demo_01.mp4",
+      "custom_overlay": "work/ep01/cards/S2_card_core.png",
+      "start": 4.0,
+      "end": 10.0,
+      "ss": 0.0,
+      "dim": 0.72
+    },
+    {
+      "id": "S3_card_tips",
+      "src": "work/ep01/clips/bg_demo_02.mp4",
+      "custom_overlay": "work/ep01/cards/S3_card_tips.png",
+      "start": 10.0,
+      "end": 14.5,
+      "ss": 2.0,
+      "dim": 0.72
+    },
+    {
+      "id": "S4_ending",
+      "src": "work/ep01/cards/S4_ending.png",
+      "start": 14.5,
+      "end": 18.0,
+      "zoom": 1.04
+    }
+  ],
+  "cues": [
+    {"start": 0.0, "text": "新版升级最核心的改动，一分钟讲清楚。"},
+    {"start": 4.0, "text": "纯改配乐现在五秒无损直出，完全不用等重编码。"},
+    {"start": 10.0, "text": "图文公告直接上四比三卡片，信息流多出三分之一面积。"},
+    {"start": 14.5, "text": "对照表我放完整了，记得点赞收藏备用。"}
+  ]
+}

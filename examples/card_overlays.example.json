@@ -1,0 +1,48 @@
+{
+  "out_dir": "work/ep01/cards",
+  "width": 1440,
+  "height": 1080,
+  "cards": [
+    {
+      "id": "S1_opening",
+      "type": "module_a",
+      "title": "新版本更新 1分钟省流",
+      "tag": "必看亮点",
+      "tag_color": [224, 58, 62],
+      "accent_rgb": [95, 175, 255],
+      "poster": "media/poster_main.jpg",
+      "poster_y_bias": 0.42
+    },
+    {
+      "id": "S2_card_core",
+      "type": "module_b",
+      "title": "核心功能与效率优化",
+      "badge": "重点改动",
+      "badge_color": [24, 112, 224],
+      "bullets": [
+        ["导出速度", "默认启用多线程直通复用，纯改音频无需重编码，3–5 秒直接成片"],
+        ["字幕对齐", "起音检测自动压紧气口，确保下一句字幕只在真正开口时显示"],
+        ["兼容说明", "老工程配置完全向下兼容，无需手动重写分镜文件"]
+      ]
+    },
+    {
+      "id": "S3_card_tips",
+      "type": "module_b",
+      "title": "避坑建议与实操结论",
+      "badge": "实操指南",
+      "badge_color": [222, 68, 52],
+      "bullets": [
+        "常规图文或产品公告优先切 4:3 卡片模式，竖屏信息流多出约 33% 阅读面积",
+        "卡片上写清详细参数，口播只用 10–15 字讲结论，观众会主动暂停看细节"
+      ]
+    },
+    {
+      "id": "S4_ending",
+      "type": "module_c",
+      "title": "收尾展示页",
+      "poster": "media/poster_ending.jpg",
+      "x_bias": 0.5,
+      "pill": "完整参数对照 · 建议收藏备用"
+    }
+  ]
+}

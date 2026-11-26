@@ -24,14 +24,14 @@ fetch_bili_media  ──▶  口播稿 + 素文案  ──▶  voice_pipeline   
 3. **素材脱敏与防风控打码**（`scripts/prep_clips.py`）
    - 强制剥离原声（`-an`），统一规范化至 `1920×1080 30fps`；
    - 支持裁剪去水印、局部高斯模糊遮盖第三方硬字幕、可选左上角 `测试期画面` 标签、以及 **24px 圆角羽化像素马赛克** + 批量 QA 拼图。
-4. **抖音小屏优先双版式渲染 & 母带处理**（`scripts/render_video.py`）
-   - **`16x9_full`（默认主力）**：全屏高清原画直出，关闭厚重黑底遮罩，左上极简裸字 HUD + 底部 **`78px`** 单行粗描边字幕 + 居中 `96–116px` 核心数据弹窗（`callouts`）；另支持纯公告专用 **`4x3_card`**；
+4. **抖音小屏优先双版式渲染 & 母带处理**（`scripts/render_video.py` / `make_card_overlays.py` / `swap_audio.py`）
+   - **`16x9_full`（默认主力）**：全屏高清原画直出，关闭厚重黑底遮罩，左上极简裸字 HUD + 底部 **`78px`** 单行粗描边字幕 + 居中 `96–116px` 核心数据弹窗（`callouts`）；另支持 **`4x3_card`**（配套 `make_card_overlays.py` 三模块省流公告卡片）；
    - **OpenCV 亚像素浮点微推**：静态图采用 `cv2.warpAffine` 浮点缩放，彻底杜绝 FFmpeg `zoompan` 整数像素抖动；
    - **30fps 连续推进章节进度条**：支持 `separate_bottom`（画面外独立底条，零遮挡游戏 UI）、`separate_top`、`overlay_bottom`、`overlay_top` 四模式；
-   - **抖音响度母带**：人声高通压缩 + BGM 人声凹槽 EQ + 侧链闪避 + 2-pass `loudnorm` + 192kHz 过采样硬限幅（`-11.5 ~ -12.0 LUFS` / `-1.0 dBTP`）；
+   - **抖音响度母带 & 5 秒无损换乐**：人声高通压缩 + BGM 人声凹槽 EQ + 侧链闪避 + 2-pass `loudnorm` + 192kHz 过采样硬限幅（`-11.5 ~ -12.0 LUFS` / `-1.0 dBTP`）；仅调配乐时 `swap_audio.py` 走 `-c:v copy` 5 秒直出；
    - 自动输出 `inspection_sheet.jpg`（12 帧验收拼图）并支持 `--dry-run`。
-5. **Style-C 撞色斜切三比例封面生成器**（`scripts/make_covers.py`）
-   - 一次渲染无裁切输出 `cover_16x9`（B 站个人空间）、`cover_4x3`（抖音横封 + B 站首页推荐）、`cover_3x4`（抖音竖封）及 `covers_preview.jpg`，支持对原画敏感区域预打 24px 马赛克。
+5. **Style-C 多比例封面生成器**（`scripts/make_covers.py`）
+   - 一次渲染无裁切输出 `cover_16x9`（B 站个人空间）、`cover_4x3`（抖音横封 + B 站首页推荐）、`cover_3x4`（抖音竖封，加 `--include-9x16` 可同步输出 `cover_9x16`）及 `covers_preview.jpg`，支持对原画敏感区域预打 24px 马赛克与 `--safe-zone-guide` 避让区标线。
 6. **多账号隔离双平台自动发布 & 错峰批发**（`scripts/publisher/`）
    - **单浏览器多号隔离**：一号一独立原生 Chrome `user_data_dir`（`profiles/<account>/`），无需导出 Cookie，提供扫码登录与状态巡检（`login_account.py`）；
    - **双平台双比例封面上传**：抖音单弹窗连传 `4:3 + 3:4`（几何匹配 `<150px` + `expect_file_chooser` 兜底）；B 站连传 `4:3 + 16:9` 槽位；
@@ -53,15 +53,20 @@ benson-video/
 │   └── accounts.example.json              # 多账号独立 Chrome Profile 注册模板
 ├── examples/
 │   ├── project.example.json               # 渲染任务配置模板 (render_video.py)
+│   ├── project_4x3_card.example.json      # 4:3 省流卡片模式工程模板
+│   ├── card_overlays.example.json         # 4:3 Module A/B/C 卡片生成模板
 │   ├── clips_spec.example.json            # 批量切材与局部模糊/马赛克模板 (prep_clips.py)
 │   ├── voice_chunks.example.json          # 短块配音输入模板 (voice_pipeline.py)
 │   ├── publish_job.example.json           # 单条双平台发布任务模板 (publish_dual.py)
 │   ├── batch_jobs.example.json            # 随机错峰批发清单模板 (stagger_publish.py)
 │   └── launch_qr_login.example.cmd        # Windows 原生 Chrome 扫码快捷启动模板
 ├── references/
+│   ├── script-templates-and-hooks.md      # 5大爆款口播骨架、陈述式标题与无缝SRT/剪映交接
+│   ├── editing-and-motion-recipes.md      # 4:3三模块卡片规范、5秒换配乐、去水印与加速配方
+│   ├── tool-ecosystem.md                  # 标准工程目录、9:16扩展与开源AI视频工具地图
 │   ├── layout-and-visuals.md              # 双版式、小屏大字、30fps进度条与封面规范
 │   ├── audio-and-voice.md                 # 4模式配音、真人紧剪、听检闸门与响度混音配方
-│   ├── clip-sanitization-and-qa.md        # 声画对位、去水印/24px马赛克与出片验收清单
+│   ├── clip-sanitization-and-qa.md        # 声画对位、主动补录红线、去水印/24px马赛克与出片验收清单
 │   ├── multi-account-isolation.md         # 单浏览器多账号隔离架构
 │   ├── douyin-game-handle-and-tags.md     # 抖音话题与游戏手柄强校验及草稿重开陷阱
 │   └── dual-ratio-cover-upload.md         # 抖音/B站双比例封面弹窗定位机制
@@ -71,8 +76,10 @@ benson-video/
     ├── fetch_bili_media.py                # B站视频/封面抓取与选镜拼图
     ├── voice_pipeline.py                  # 5模式配音/克隆/真人气口紧剪与词级对齐
     ├── prep_clips.py                      # 切条/裁切/局部高斯模糊/24px圆角马赛克/QA拼图
+    ├── make_card_overlays.py              # 4:3 Module A/B/C 省流公告卡贴片生成器
+    ├── swap_audio.py                      # 5秒无损(-c:v copy)换BGM/重混音封装工具
     ├── render_video.py                    # 双画幅主渲染引擎 + 混音母带 + 12帧质检图
-    ├── make_covers.py                     # Style-C 三比例封面生成器
+    ├── make_covers.py                     # Style-C 多比例封面生成器（含安全避让区与可选9:16）
     └── publisher/
         ├── __init__.py
         ├── browser_profile.py             # 独立 Chrome user_data_dir 会话管理
@@ -117,12 +124,16 @@ python -X utf8 scripts/voice_pipeline.py --mode human_tighten --audio raw_voice.
 # 3. 批量预处理素材（去原声 + 局部模糊 + 24px马赛克 + QA拼图）
 python -X utf8 scripts/prep_clips.py --spec examples/clips_spec.example.json --qa-sheet work/ep01/clips_qa.jpg
 
-# 4. 校验并渲染 16:9 成片（默认带 52px separate_bottom 章节进度条 + 抖音响度母带）
+# 4. 校验并渲染 16:9 / 4:3 成片（4:3 可先用 make_card_overlays.py 生成卡片贴片）
+python -X utf8 scripts/make_card_overlays.py --spec examples/card_overlays.example.json --dry-run
 python -X utf8 scripts/render_video.py --config path/to/project.json --dry-run
 python -X utf8 scripts/render_video.py --config path/to/project.json
 
-# 5. 生成三比例封面 + 预览拼图
-python -X utf8 scripts/make_covers.py --out-dir outputs/ep01/covers --hero hero.jpg --spark "1分钟省流" --game-tag "游戏名" --title "核心结论!" --pill "重点数据" --sub "机制拆解与排期"
+# 4b. 仅调整或更换配乐时，5 秒无损直封 (-c:v copy)
+python -X utf8 scripts/swap_audio.py --video output.mp4 --voice voice.wav --bgm new_bgm.wav --out output_v2.mp4
+
+# 5. 生成多比例封面 + 安全避让区预览（加 --include-9x16 同步出 9:16 竖屏满屏封面）
+python -X utf8 scripts/make_covers.py --out-dir outputs/ep01/covers --hero hero.jpg --spark "1分钟省流" --game-tag "游戏名" --title "核心结论!" --pill "重点数据" --sub "机制拆解与排期" --safe-zone-guide
 
 # 6. 配置本地账号（首次需复制模板并扫码一次）
 Copy-Item config\accounts.example.json config\accounts.json

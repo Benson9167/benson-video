@@ -90,6 +90,14 @@ def build_style_c_html(
         content_left, content_right, content_bottom, content_align = "54px", "44px", "92px", "flex-start"
         title_fs, stroke_w, pill_fs, sub_fs = "174px", "22px", "48px", "58px"
         row_dir, row_gap, sub_extra = "row", "20px", ""
+    elif layout_kind == "9x16":
+        hero_pos = hero_pos_override or "center 18%"
+        bar_h, bar_bottom, skew = "680px", "-42px", "-3.2deg"
+        spark_fs, spark_pad, spark_top, spark_left = "54px", "10px 32px", "64px", "40px"
+        game_fs, game_top, game_right = "30px", "72px", "40px"
+        content_left, content_right, content_bottom, content_align = "44px", "44px", "240px", "center"
+        title_fs, stroke_w, pill_fs, sub_fs = "136px", "20px", "48px", "54px"
+        row_dir, row_gap, sub_extra = "column", "18px", "text-align: center;"
     else:
         hero_pos = hero_pos_override or "74% 12%"
         bar_h, bar_bottom, skew = "546px", "-34px", "-3.5deg"
@@ -215,6 +223,16 @@ def _draw_preview_safe_zones(im, kind, font):
     ov = Image.new("RGBA", rgba.size, (0, 0, 0, 0))
     d = ImageDraw.Draw(ov, "RGBA")
     w, h = rgba.size
+    if kind == "9x16":
+        zone_h = int(round(h * (240.0 / 1920.0)))
+        left_w = int(round(w * 0.62))
+        d.rectangle([0, h - zone_h, left_w, h], fill=(255, 68, 68, 82), outline=(255, 224, 64, 240), width=3)
+        d.text((10, h - zone_h + 8), "♡ 底部文案/点赞避让区", fill=(255, 248, 180, 255), font=font)
+        rw = int(round(w * 0.14))
+        d.rectangle([w - rw, int(h * 0.45), w, int(h * 0.85)], fill=(255, 68, 68, 72), outline=(255, 224, 64, 220), width=2)
+        d.text((w - rw + 4, int(h * 0.45) + 6), "右侧按钮", fill=(255, 248, 180, 255), font=font)
+        return Image.alpha_composite(rgba, ov).convert("RGB")
+
     zone_h = int(round(h * (126.0 / 1440.0 if kind == "3x4" else 92.0 / 1080.0)))
     left_w = int(round(w * (0.42 if kind == "3x4" else 0.28)))
     d.rectangle([0, h - zone_h, left_w, h], fill=(255, 68, 68, 82), outline=(255, 224, 64, 240), width=3)
@@ -240,6 +258,8 @@ def generate_covers(
     sans_font=None,
     mosaic_boxes=None,
     draw_safe_guides=False,
+    include_9x16=False,
+    hero_pos_9x16=None,
 ):
     os.makedirs(out_dir, exist_ok=True)
     src_hero = hero_img
@@ -255,19 +275,21 @@ def generate_covers(
     sans_uri = file_to_data_uri(s_path, "font/ttf") if (s_path and s_path.lower().endswith((".ttf", ".otf"))) else ""
 
     specs = [
-        ("16x9", 1920, 1080, os.path.join(out_dir, "cover_16x9")),
-        ("4x3",  1440, 1080, os.path.join(out_dir, "cover_4x3")),
-        ("3x4",  1080, 1440, os.path.join(out_dir, "cover_3x4")),
+        ("16x9", 1920, 1080, os.path.join(out_dir, "cover_16x9"), "16:9 B站个人空间 (1920x1080)", None),
+        ("4x3",  1440, 1080, os.path.join(out_dir, "cover_4x3"),  "4:3 抖音横封 & B站首页 (1440x1080)", None),
+        ("3x4",  1080, 1440, os.path.join(out_dir, "cover_3x4"),  "3:4 抖音竖封 (1080x1440)", hero_pos_3x4),
     ]
+    if include_9x16:
+        specs.append(("9x16", 1080, 1920, os.path.join(out_dir, "cover_9x16"), "9:16 竖屏全屏封面 (1080x1920)", hero_pos_9x16))
 
     with sync_playwright() as p:
         browser = p.chromium.launch(channel="chrome", headless=True)
-        for kind, w, h, stem in specs:
+        for kind, w, h, stem, _, pos_ovr in specs:
             page = browser.new_page(viewport={"width": w, "height": h}, device_scale_factor=1)
             html = build_style_c_html(
                 w, h, hero_uri, title_uri, sans_uri,
                 spark_tag, game_tag, main_title, highlight_pill, sub_text,
-                kind, hero_pos_override=(hero_pos_3x4 if kind == "3x4" else None),
+                kind, hero_pos_override=pos_ovr,
             )
             page.set_content(html, wait_until="load")
             page.evaluate("() => document.fonts.ready")
@@ -283,15 +305,14 @@ def generate_covers(
     if tmp_mosaic and os.path.exists(tmp_mosaic):
         os.remove(tmp_mosaic)
 
-    im16 = Image.open(specs[0][3] + ".jpg").convert("RGB")
-    im43 = Image.open(specs[1][3] + ".jpg").convert("RGB")
-    im34 = Image.open(specs[2][3] + ".jpg").convert("RGB")
     th = 720
-    r16 = im16.resize((int(th * 16 / 9), th), Image.Resampling.LANCZOS)
-    r43 = im43.resize((int(th * 4 / 3), th), Image.Resampling.LANCZOS)
-    r34 = im34.resize((int(th * 3 / 4), th), Image.Resampling.LANCZOS)
+    tiles = []
+    for kind, w, h, stem, lbl, _ in specs:
+        im = Image.open(stem + ".jpg").convert("RGB")
+        resized = im.resize((int(round(th * w / h)), th), Image.Resampling.LANCZOS)
+        tiles.append((kind, resized, lbl))
     pad, header_h = 24, 62
-    total_w = r16.width + r43.width + r34.width + pad * 4
+    total_w = sum(t[1].width for t in tiles) + pad * (len(tiles) + 1)
     sheet = Image.new("RGB", (total_w, th + header_h + pad), (242, 246, 252))
     draw = ImageDraw.Draw(sheet)
     lbl_fp = find_font(get_cjk_sans_candidates())
@@ -302,11 +323,7 @@ def generate_covers(
         lbl_font = ImageFont.load_default()
         guide_font = lbl_font
     x = pad
-    for kind, im, lbl in (
-        ("16x9", r16, "16:9 B站个人空间 (1920x1080)"),
-        ("4x3", r43, "4:3 抖音横封 & B站首页 (1440x1080)"),
-        ("3x4", r34, "3:4 抖音竖封 (1080x1440)"),
-    ):
+    for kind, im, lbl in tiles:
         draw.text((x + 4, 18), lbl, fill=(14, 52, 118), font=lbl_font)
         tile = _draw_preview_safe_zones(im, kind, guide_font) if draw_safe_guides else im
         sheet.paste(tile, (x, header_h))
@@ -314,16 +331,13 @@ def generate_covers(
     preview = os.path.join(out_dir, "covers_preview.jpg")
     sheet.save(preview, quality=94)
     print("COVERS_PREVIEW:", preview)
-    return {
-        "cover_16x9": specs[0][3] + ".jpg",
-        "cover_4x3": specs[1][3] + ".jpg",
-        "cover_3x4": specs[2][3] + ".jpg",
-        "preview": preview,
-    }
+    res = {f"cover_{kind}": stem + ".jpg" for kind, _, _, stem, _, _ in specs}
+    res["preview"] = preview
+    return res
 
 
 if __name__ == "__main__":
-    ap = argparse.ArgumentParser(description="Style-C Multi-Ratio Cover Generator (16:9 + 4:3 + 3:4)")
+    ap = argparse.ArgumentParser(description="Style-C Multi-Ratio Cover Generator (16:9 + 4:3 + 3:4 + optional 9:16)")
     ap.add_argument("--out-dir", required=True)
     ap.add_argument("--hero", required=True)
     ap.add_argument("--spark", "--badge", dest="spark", default="1分钟省流")
@@ -332,6 +346,8 @@ if __name__ == "__main__":
     ap.add_argument("--pill", default="重点福利")
     ap.add_argument("--sub", default="机制拆解 · 实用规划")
     ap.add_argument("--hero-pos-3x4", default=None)
+    ap.add_argument("--include-9x16", action="store_true", help="Also generate optional 9:16 (1080x1920) vertical cover")
+    ap.add_argument("--hero-pos-9x16", default=None, help="Optional CSS object-position for 9:16 cover")
     ap.add_argument("--title-font", default=None)
     ap.add_argument("--sans-font", default=None)
     ap.add_argument("--mosaic", action="append", default=[], help="x1,y1,x2,y2 (repeatable 24px pixel mosaic)")
@@ -351,4 +367,6 @@ if __name__ == "__main__":
         sans_font=args.sans_font,
         mosaic_boxes=mboxes,
         draw_safe_guides=args.safe_zone_guide,
+        include_9x16=args.include_9x16,
+        hero_pos_9x16=args.hero_pos_9x16,
     )
